@@ -12,18 +12,24 @@ app.js       ตรรกะ: login, โหลดรายชื่อผู้�
 config.js    ค่าที่แก้ได้ (LIFF_ID + URL ปลายทาง n8n) — เปิดเผยได้ ไม่มีความลับ
 ```
 
-## ขั้นตอนที่ 1 — สร้าง repo และ push ขึ้น GitHub
+## ขั้นตอนที่ 1 — push ขึ้น GitHub
 
-รันคำสั่งต่อไปนี้ **ในเครื่องของคุณเอง** (เทอร์มินัลที่ล็อกอิน GitHub ไว้แล้ว หรือใช้ GitHub Desktop)
+โฟลเดอร์นี้ **git init และ commit แรกให้เรียบร้อยแล้ว** (branch ชื่อ `master`)
+เหลือแค่สร้าง repo เปล่าบน GitHub แล้วต่อ remote + push จากเครื่องคุณเอง
+(รันคำสั่งด้านล่างในเทอร์มินัลบนเครื่องคุณ ที่ล็อกอิน GitHub ไว้แล้ว หรือใช้ GitHub Desktop)
+
+> ⚠️ ถ้าเปิดโฟลเดอร์นี้แล้วเห็นไฟล์ `.git` แปลกๆ ค้างอยู่ (เช่นไฟล์ `.lock`) ไม่ต้องกังวล —
+> เป็นเศษไฟล์จากตอนที่ผมรันคำสั่งผ่านเครือข่ายแล้ว lock ค้าง ลบไม่ได้จากฝั่งนั้น
+> แต่ repo ยังใช้งานได้ปกติ (มี commit แรกอยู่แล้ว) ถ้าอยากเคลียร์ให้สะอาด ลบไฟล์ `.lock`
+> พวกนั้นทิ้งได้เลยจาก File Explorer ก่อน push (ไม่ลบ `.git` ทั้งโฟลเดอร์)
+
 เปลี่ยน `<YOUR_GITHUB_USERNAME>` เป็นบัญชี GitHub ของคุณ/บริษัท
 
 ```bash
 cd liff-leave-form
 
-git init
-git add .
-git commit -m "Initial LIFF leave request form"
-git branch -M main
+# (ทางเลือก) เปลี่ยนชื่อ branch จาก master เป็น main ให้ตรงกับค่าเริ่มต้นของ GitHub ปัจจุบัน
+git branch -m main
 
 # ไปสร้าง repo เปล่าที่ https://github.com/new ก่อน
 #   - ตั้งชื่อ เช่น pk-leave-liff

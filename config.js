@@ -10,7 +10,7 @@ const CONFIG = {
   // ⚠️ ต้องกรอกหลังสร้าง LIFF App ใน LINE Developers Console แล้วเท่านั้น
   //    (แท็บ LIFF ของ Messaging API channel "ระบบลา PK" → คัดลอก LIFF ID)
   //    ก่อนกรอกค่านี้ ฟอร์มจะขึ้นข้อความแจ้งว่ายังตั้งค่าไม่เสร็จ
-  LIFF_ID: 'REPLACE_WITH_LIFF_ID',
+  LIFF_ID: '2010996901-WF5on61b',
 
   // ปลายทาง n8n — คงที่ ไม่ต้องแก้ (เว้นแต่ย้าย n8n host)
   SUBMIT_URL: 'https://n8npkapp.pktechnic.com/webhook/line-leave-submit',

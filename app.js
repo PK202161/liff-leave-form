@@ -123,7 +123,17 @@ async function submitLeaveRequest(idToken) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const data = await res.json().catch(function () { return { ok: false, message: 'อ่านผลลัพธ์ไม่สำเร็จ' }; });
+    const rawText = await res.text();
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseErr) {
+      data = {
+        ok: false,
+        message: 'อ่านผลลัพธ์ไม่สำเร็จ (HTTP ' + res.status + ')\nคำตอบจากเซิร์ฟเวอร์: ' +
+          (rawText ? rawText.slice(0, 300) : '(ว่างเปล่า)')
+      };
+    }
 
     if (!res.ok || !data.ok) {
       showError(data.message || 'ส่งคำขอลาไม่สำเร็จ กรุณาลองใหม่');

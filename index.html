@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>ยื่นใบลา - PK Technic</title>
+<link rel="stylesheet" href="style.css" />
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+<header>
+  <h1>📝 ยื่นใบลา</h1>
+  <p>PK Technic — ระบบลาภายใน</p>
+</header>
+
+<main>
+  <div id="loadingMsg" class="msg info">กำลังโหลด...</div>
+  <div id="notConfiguredMsg" class="msg error hidden">
+    ฟอร์มนี้ยังตั้งค่าไม่เสร็จ (ยังไม่ได้กรอก LIFF_ID ใน config.js)
+    กรุณาติดต่อผู้ดูแลระบบ
+  </div>
+  <div id="errorMsg" class="msg error hidden"></div>
+  <div id="successMsg" class="msg success hidden"></div>
+
+  <form id="leaveForm" class="hidden">
+    <div class="card">
+      <div class="field">
+        <label for="leaveType">ประเภทการลา</label>
+        <select id="leaveType" required></select>
+      </div>
+
+      <div class="field">
+        <label for="startDT">วันที่เริ่มลา</label>
+        <input type="datetime-local" id="startDT" required />
+      </div>
+
+      <div class="field">
+        <label for="endDT">วันที่สิ้นสุดการลา</label>
+        <input type="datetime-local" id="endDT" required />
+        <div id="daysPreview" class="hint"></div>
+      </div>
+
+      <div class="field">
+        <label for="reason">เหตุผล</label>
+        <textarea id="reason" placeholder="ระบุเหตุผลการลาโดยย่อ" required></textarea>
+      </div>
+
+      <div class="field switch-row" id="emergencyRow">
+        <label for="isEmergency" style="margin-bottom:0">🚨 ลาฉุกเฉิน/ระหว่างวัน</label>
+        <input type="checkbox" id="isEmergency" style="width:20px;height:20px" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="field" style="margin-bottom:0">
+        <label>ผู้รับมอบงาน (เลือกได้มากกว่า 1 คน)</label>
+        <div class="hint">ต้องเลือกอย่างน้อย 1 คน — ทุกคนต้องกดรับทราบก่อนคำขอจะส่งไปหาหัวหน้า</div>
+        <div id="delegateList" class="delegate-list">
+          <div class="hint" style="padding:10px">กำลังโหลดรายชื่อพนักงาน...</div>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" id="submitBtn">ส่งคำขอลา</button>
+  </form>
+</main>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

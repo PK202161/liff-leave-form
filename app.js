@@ -17,8 +17,7 @@ const els = {
   endDT: document.getElementById('endDT'),
   daysPreview: document.getElementById('daysPreview'),
   reason: document.getElementById('reason'),
-  isEmergency: document.getElementById('isEmergency'),
-  emergencyRow: document.getElementById('emergencyRow'),
+  emergencyNote: document.getElementById('emergencyNote'),
   delegateList: document.getElementById('delegateList'),
   submitBtn: document.getElementById('submitBtn')
 };
@@ -41,7 +40,31 @@ function populateLeaveTypes() {
   });
 }
 
+// ระบบตัดสินเองว่าเป็นลาฉุกเฉินหรือลาล่วงหน้า จากวันที่เริ่มลา
+// (เซิร์ฟเวอร์คำนวณซ้ำอีกครั้งเสมอ ค่าตรงนี้แสดงให้ผู้ใช้ทราบล่วงหน้าเท่านั้น)
+function updateEmergencyNote() {
+  if (!els.startDT.value) {
+    els.emergencyNote.textContent = '';
+    return;
+  }
+  const start = new Date(els.startDT.value);
+  if (isNaN(start.getTime())) {
+    els.emergencyNote.textContent = '';
+    return;
+  }
+  const today = new Date();
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  if (startDay.getTime() <= todayDay.getTime()) {
+    els.emergencyNote.textContent = '🚨 ระบบจะบันทึกเป็น "ลาฉุกเฉิน/ระหว่างวัน" เพราะเริ่มลาวันนี้';
+  } else {
+    els.emergencyNote.textContent = '📅 ระบบจะบันทึกเป็น "ลาล่วงหน้า" เพราะเริ่มลาตั้งแต่พรุ่งนี้เป็นต้นไป';
+  }
+}
+
 function updateDaysPreview() {
+  updateEmergencyNote();
   if (!els.startDT.value || !els.endDT.value) {
     els.daysPreview.textContent = '';
     return;
@@ -113,8 +136,8 @@ async function submitLeaveRequest(idToken) {
     startDT: toLocalISOWithOffset(els.startDT.value),
     endDT: toLocalISOWithOffset(els.endDT.value),
     reason: els.reason.value,
-    delegateEmpId: delegates.join(','),
-    isEmergency: !!els.isEmergency.checked
+    delegateEmpId: delegates.join(',')
+    // ไม่ต้องส่ง isEmergency — เซิร์ฟเวอร์ตัดสินเองจากวันที่เริ่มลา
   };
 
   try {
@@ -183,8 +206,14 @@ async function main() {
 
     populateLeaveTypes();
 
+    // เปิดจากปุ่ม "ลาฉุกเฉิน/ระหว่างวัน" → เติมวันที่เริ่มลาเป็นตอนนี้ให้เลย
     if (mode === 'intraday') {
-      els.isEmergency.checked = true;
+      const now = new Date();
+      const pad = function (n) { return String(n).padStart(2, '0'); };
+      const localNow = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
+        'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      els.startDT.value = localNow;
+      updateEmergencyNote();
     }
 
     const employees = await fetchEmployeeList(idToken);

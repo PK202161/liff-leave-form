@@ -43,13 +43,36 @@ function hideError() {
   els.error.classList.add('hidden');
 }
 
-function populateLeaveTypes() {
+// แสดงเฉพาะประเภทที่พนักงานคนนี้มีสิทธิ์จริง
+// ประเภทที่โควตาเป็น 0 (เช่น ลาคลอด / ลาช่วยเลี้ยงดูบุตร ที่ HR ยังไม่ได้เปิดให้)
+// จะถูกซ่อน เพื่อไม่ให้เลือกแล้วไปเจอ error ตอนกดส่ง
+// หมายเหตุ: 'ลาไม่รับค่าจ้าง' ไม่มีโควตา จึงแสดงเสมอ
+function populateLeaveTypes(quotas) {
+  els.leaveType.innerHTML = '';
+
+  const quotaByType = {};
+  (quotas || []).forEach(function (q) { quotaByType[q.leaveType] = q; });
+
+  let shown = 0;
   CONFIG.LEAVE_TYPES.forEach(function (t) {
+    if (t !== 'ลาไม่รับค่าจ้าง') {
+      const q = quotaByType[t];
+      // ยังไม่มีข้อมูลโควตาเลย → แสดงไว้ก่อน ให้เซิร์ฟเวอร์เป็นคนบอกเหตุผล
+      if (q && q.hasData && !(q.quota > 0)) return;
+    }
     const opt = document.createElement('option');
     opt.value = t;
     opt.textContent = t;
     els.leaveType.appendChild(opt);
+    shown += 1;
   });
+
+  if (shown === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'ยังไม่มีสิทธิ์การลา — ติดต่อฝ่ายบุคคล';
+    els.leaveType.appendChild(opt);
+  }
 }
 
 // ระบบตัดสินเองว่าเป็นลาฉุกเฉินหรือลาล่วงหน้า จากวันที่เริ่มลา
@@ -301,8 +324,6 @@ async function main() {
 
     const profile = await liff.getProfile();
 
-    populateLeaveTypes();
-
     // เปิดจากปุ่ม "ลาฉุกเฉิน/ระหว่างวัน" → เติมวันที่เริ่มลาเป็นตอนนี้ให้เลย
     if (mode === 'intraday') {
       const now = new Date();
@@ -314,6 +335,7 @@ async function main() {
     }
 
     const formData = await fetchFormData(idToken);
+    populateLeaveTypes(formData.quotas);
     renderQuota(formData);
     // ตัดตัวเองออกจากรายชื่อผู้รับมอบงาน (เซิร์ฟเวอร์ยืนยันตัวตนจาก ID Token แล้ว)
     renderDelegateList(formData.employees || [], formData.me ? formData.me.empId : null);

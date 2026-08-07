@@ -98,9 +98,18 @@ function updateDaysPreview() {
     els.daysPreview.textContent = 'ช่วงวันที่ไม่ถูกต้อง';
     return;
   }
-  const msPerDay = 24 * 60 * 60 * 1000;
-  const rawDays = Math.floor((new Date(end.toDateString()) - new Date(start.toDateString())) / msPerDay) + 1;
-  els.daysPreview.textContent = 'ประมาณ ' + rawDays + ' วันตามปฏิทิน (ระบบจะคำนวณวันทำงานจริงหลังกดส่ง ตามวันหยุดของคุณ)';
+  const sameDay = start.toDateString() === end.toDateString();
+  if (sameDay) {
+    const rawHours = (end.getTime() - start.getTime()) / 3600000;
+    els.daysPreview.textContent =
+      'ช่วงที่เลือกประมาณ ' + (Math.round(rawHours * 10) / 10) + ' ชั่วโมง — ' +
+      'ระบบจะหักเวลาพักเที่ยงและปัดขึ้นทีละ 30 นาทีหลังกดส่ง';
+  } else {
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const rawDays = Math.floor((new Date(end.toDateString()) - new Date(start.toDateString())) / msPerDay) + 1;
+    els.daysPreview.textContent =
+      'ครอบคลุม ' + rawDays + ' วันตามปฏิทิน — ระบบจะนับเฉพาะวันและเวลาทำงานจริงของคุณหลังกดส่ง';
+  }
 }
 
 async function fetchFormData(idToken) {
@@ -111,6 +120,18 @@ async function fetchFormData(idToken) {
     throw new Error(data.message || 'โหลดรายชื่อพนักงานไม่สำเร็จ');
   }
   return data;
+}
+
+// แปลงจำนวนวัน (ทศนิยม) เป็นข้อความอ่านง่าย เช่น 3.25 → "3 วัน 2 ชม."
+const HOURS_PER_DAY = 8;
+function fmtDuration(days) {
+  const d = Number(days) || 0;
+  if (d <= 0) return '0 วัน';
+  const whole = Math.floor(d + 1e-9);
+  const hours = Math.round((d - whole) * HOURS_PER_DAY * 10) / 10;
+  if (whole > 0 && hours > 0) return whole + ' วัน ' + hours + ' ชม.';
+  if (whole > 0) return whole + ' วัน';
+  return hours + ' ชม.';
 }
 
 function renderQuota(data) {
@@ -138,15 +159,15 @@ function renderQuota(data) {
     if (!q.quota && !q.used && !q.pending) return; // ไม่แสดงประเภทที่ไม่มีสิทธิ์เลย
 
     const cls = q.available <= 0 ? 'none' : (q.available <= 1 ? 'low' : 'ok');
-    const pendingNote = q.pending > 0 ? '<span class="qsub">รออนุมัติ ' + q.pending + ' วัน</span>' : '';
+    const pendingNote = q.pending > 0 ? '<span class="qsub">รออนุมัติ ' + fmtDuration(q.pending) + '</span>' : '';
 
     const row = document.createElement('div');
     row.className = 'quota-row';
     row.setAttribute('data-type', q.leaveType);
     row.innerHTML =
       '<span class="qname">' + q.leaveType + '</span>' +
-      '<span class="qval ' + cls + '">เหลือ ' + q.available + ' วัน' +
-      '<span class="qsub">จาก ' + q.quota + ' วัน</span>' + pendingNote + '</span>';
+      '<span class="qval ' + cls + '">เหลือ ' + fmtDuration(q.available) +
+      '<span class="qsub">จาก ' + fmtDuration(q.quota) + '</span>' + pendingNote + '</span>';
     els.quotaList.appendChild(row);
   });
 

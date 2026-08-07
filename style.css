@@ -94,6 +94,31 @@ textarea { min-height: 80px; resize: vertical; }
 .delegate-item .name { font-size: 14px; }
 .delegate-item .dept { font-size: 12px; color: #999; margin-left: auto; }
 
+.quota-header {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.quota-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+.quota-row:last-child { border-bottom: none; }
+
+.quota-row .qname { color: #333; }
+.quota-row .qval { font-weight: 700; }
+.quota-row .qval.ok { color: #06c755; }
+.quota-row .qval.low { color: #e8a33d; }
+.quota-row .qval.none { color: #c0392b; }
+.quota-row .qsub { font-size: 11px; color: #aaa; margin-left: 6px; font-weight: 400; }
+.quota-row.active { background: #f4fbf6; margin: 0 -8px; padding: 8px; border-radius: 6px; }
+
 .switch-row {
   display: flex;
   align-items: center;

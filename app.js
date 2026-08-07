@@ -6,6 +6,12 @@
 const qs = new URLSearchParams(window.location.search);
 const mode = qs.get('mode') || 'normal';
 
+// เส้นตายยื่นลาแบบล่วงหน้า — ต้องตรงกับ CUTOFF_NORMAL ในชีต Config
+// ค่านี้ใช้แสดงผลบนหน้าจอเท่านั้น เซิร์ฟเวอร์อ่านจาก Config และตัดสินจริงอีกครั้งเสมอ
+const CUTOFF_HOUR = 7;
+const CUTOFF_MINUTE = 30;
+const CUTOFF_LABEL = '07:30 น.';
+
 const els = {
   loading: document.getElementById('loadingMsg'),
   notConfigured: document.getElementById('notConfiguredMsg'),
@@ -19,8 +25,14 @@ const els = {
   reason: document.getElementById('reason'),
   emergencyNote: document.getElementById('emergencyNote'),
   delegateList: document.getElementById('delegateList'),
-  submitBtn: document.getElementById('submitBtn')
+  submitBtn: document.getElementById('submitBtn'),
+  quotaCard: document.getElementById('quotaCard'),
+  quotaHeader: document.getElementById('quotaHeader'),
+  quotaList: document.getElementById('quotaList')
 };
+
+// เก็บโควตาของผู้ใช้ไว้ เพื่อไฮไลต์แถวตามประเภทการลาที่เลือก
+let myQuotas = [];
 
 function showError(msg) {
   els.error.textContent = msg;
@@ -56,10 +68,21 @@ function updateEmergencyNote() {
   const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
   const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-  if (startDay.getTime() <= todayDay.getTime()) {
-    els.emergencyNote.textContent = '🚨 ระบบจะบันทึกเป็น "ลาฉุกเฉิน/ระหว่างวัน" เพราะเริ่มลาวันนี้';
+  if (startDay.getTime() < todayDay.getTime()) {
+    els.emergencyNote.textContent = '⛔ ไม่อนุญาตให้ยื่นลาย้อนหลัง กรุณาเลือกตั้งแต่วันนี้เป็นต้นไป';
+    return;
+  }
+
+  // เส้นตายยื่นแบบล่วงหน้า = CUTOFF_NORMAL ของวันที่เริ่มลา (ค่าเริ่มต้น 07:30)
+  const cutoff = new Date(startDay.getTime());
+  cutoff.setHours(CUTOFF_HOUR, CUTOFF_MINUTE, 0, 0);
+
+  if (new Date().getTime() > cutoff.getTime()) {
+    els.emergencyNote.textContent =
+      '🚨 ระบบจะบันทึกเป็น "ลาฉุกเฉิน/ระหว่างวัน" เพราะเลยเวลา ' + CUTOFF_LABEL + ' ของวันที่เริ่มลาแล้ว';
   } else {
-    els.emergencyNote.textContent = '📅 ระบบจะบันทึกเป็น "ลาล่วงหน้า" เพราะเริ่มลาตั้งแต่พรุ่งนี้เป็นต้นไป';
+    els.emergencyNote.textContent =
+      '📅 ระบบจะบันทึกเป็น "ลาล่วงหน้า" (ยื่นก่อน ' + CUTOFF_LABEL + ' ของวันที่เริ่มลา)';
   }
 }
 
@@ -80,14 +103,67 @@ function updateDaysPreview() {
   els.daysPreview.textContent = 'ประมาณ ' + rawDays + ' วันตามปฏิทิน (ระบบจะคำนวณวันทำงานจริงหลังกดส่ง ตามวันหยุดของคุณ)';
 }
 
-async function fetchEmployeeList(idToken) {
+async function fetchFormData(idToken) {
   const url = CONFIG.EMPLOYEE_LIST_URL + '?idToken=' + encodeURIComponent(idToken);
   const res = await fetch(url, { method: 'GET' });
   const data = await res.json().catch(function () { return { ok: false, message: 'อ่านข้อมูลพนักงานไม่สำเร็จ' }; });
   if (!res.ok || !data.ok) {
     throw new Error(data.message || 'โหลดรายชื่อพนักงานไม่สำเร็จ');
   }
-  return data.employees || [];
+  return data;
+}
+
+function renderQuota(data) {
+  myQuotas = data.quotas || [];
+
+  if (!data.me) {
+    els.quotaCard.style.display = 'none';
+    return;
+  }
+
+  els.quotaHeader.textContent =
+    'สิทธิ์คงเหลือของคุณ ปี ' + data.year + ' — ' + data.me.fullName + ' (' + data.me.empId + ')';
+
+  if (!data.hasQuotaData) {
+    els.quotaList.innerHTML =
+      '<div class="hint" style="padding:8px 0">ยังไม่มีข้อมูลโควตาปี ' + data.year +
+      ' ของคุณในระบบ กรุณาติดต่อฝ่ายบุคคลก่อนยื่นลา</div>';
+    els.quotaCard.style.display = '';
+    return;
+  }
+
+  els.quotaList.innerHTML = '';
+  myQuotas.forEach(function (q) {
+    if (!q.hasData) return;
+    if (!q.quota && !q.used && !q.pending) return; // ไม่แสดงประเภทที่ไม่มีสิทธิ์เลย
+
+    const cls = q.available <= 0 ? 'none' : (q.available <= 1 ? 'low' : 'ok');
+    const pendingNote = q.pending > 0 ? '<span class="qsub">รออนุมัติ ' + q.pending + ' วัน</span>' : '';
+
+    const row = document.createElement('div');
+    row.className = 'quota-row';
+    row.setAttribute('data-type', q.leaveType);
+    row.innerHTML =
+      '<span class="qname">' + q.leaveType + '</span>' +
+      '<span class="qval ' + cls + '">เหลือ ' + q.available + ' วัน' +
+      '<span class="qsub">จาก ' + q.quota + ' วัน</span>' + pendingNote + '</span>';
+    els.quotaList.appendChild(row);
+  });
+
+  els.quotaCard.style.display = '';
+  highlightSelectedQuota();
+}
+
+function highlightSelectedQuota() {
+  const selected = els.leaveType.value;
+  const rows = els.quotaList.querySelectorAll('.quota-row');
+  Array.prototype.forEach.call(rows, function (r) {
+    if (r.getAttribute('data-type') === selected) {
+      r.classList.add('active');
+    } else {
+      r.classList.remove('active');
+    }
+  });
 }
 
 function renderDelegateList(employees, myEmpId) {
@@ -216,10 +292,13 @@ async function main() {
       updateEmergencyNote();
     }
 
-    const employees = await fetchEmployeeList(idToken);
-    renderDelegateList(employees, null); // ไม่ทราบ Emp_ID ฝั่ง client เชื่อถือไม่ได้ จึงแสดงทุกคน ให้ผู้ใช้เลือกเอง (เซิร์ฟเวอร์จะตรวจซ้ำ)
+    const formData = await fetchFormData(idToken);
+    renderQuota(formData);
+    // ตัดตัวเองออกจากรายชื่อผู้รับมอบงาน (เซิร์ฟเวอร์ยืนยันตัวตนจาก ID Token แล้ว)
+    renderDelegateList(formData.employees || [], formData.me ? formData.me.empId : null);
     void profile;
 
+    els.leaveType.addEventListener('change', highlightSelectedQuota);
     els.startDT.addEventListener('change', updateDaysPreview);
     els.endDT.addEventListener('change', updateDaysPreview);
 

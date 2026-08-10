@@ -135,9 +135,20 @@ function updateDaysPreview() {
   }
 }
 
+// ⚠️ แก้ไข 10 ส.ค. 2026 — โควตาที่แสดงไม่อัปเดต และ "เด้งกลับ" เป็นค่าเดิมหลังอนุมัติ
+// สาเหตุ: URL นี้เปลี่ยนตาม idToken อย่างเดียว ซึ่ง LINE ออกให้มีอายุ 1 ชั่วโมง
+// WebView ในแอป LINE (WKWebView) จึงถือว่าเป็น URL เดิมและคืนคำตอบที่ cache ไว้
+// ทั้งที่เซิร์ฟเวอร์มีข้อมูลใหม่แล้ว
+// แก้: เติม _ts กันแคช + สั่ง no-store ทั้งฝั่ง fetch และ header
 async function fetchFormData(idToken) {
-  const url = CONFIG.EMPLOYEE_LIST_URL + '?idToken=' + encodeURIComponent(idToken);
-  const res = await fetch(url, { method: 'GET' });
+  const url = CONFIG.EMPLOYEE_LIST_URL +
+    '?idToken=' + encodeURIComponent(idToken) +
+    '&_ts=' + Date.now();
+  const res = await fetch(url, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+  });
   const data = await res.json().catch(function () { return { ok: false, message: 'อ่านข้อมูลพนักงานไม่สำเร็จ' }; });
   if (!res.ok || !data.ok) {
     throw new Error(data.message || 'โหลดรายชื่อพนักงานไม่สำเร็จ');
@@ -344,6 +355,15 @@ async function main() {
     els.leaveType.addEventListener('change', highlightSelectedQuota);
     els.startDT.addEventListener('change', updateDaysPreview);
     els.endDT.addEventListener('change', updateDaysPreview);
+
+    // 🆕 10 ส.ค. 2026 — ผู้ใช้มักสลับไปกดอนุมัติในแชทแล้วกลับมาที่ฟอร์มโดยไม่โหลดใหม่
+    // ถ้าไม่ดึงซ้ำ ตัวเลขบนการ์ดจะค้างอยู่ที่ค่าตอนเปิดครั้งแรก
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'visible') return;
+      fetchFormData(idToken)
+        .then(function (fresh) { renderQuota(fresh); })
+        .catch(function () { /* ดึงซ้ำไม่สำเร็จ — คงค่าเดิมไว้ ไม่ต้องรบกวนผู้ใช้ */ });
+    });
 
     els.form.addEventListener('submit', function (e) {
       e.preventDefault();

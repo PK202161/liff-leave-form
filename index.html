@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>ยื่นใบลา - PK Technic</title>
-<link rel="stylesheet" href="style.css?v=2" />
+<link rel="stylesheet" href="style.css?v=3" />
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
@@ -23,6 +23,16 @@
   <div id="successMsg" class="msg success hidden"></div>
 
   <form id="leaveForm" class="hidden">
+    <div class="card onbehalf-card hidden" id="onBehalfCard">
+      <div class="field" style="margin-bottom:0">
+        <label for="onBehalfSelect">ยื่นแทนพนักงาน (สิทธิ์ฝ่ายบุคคล)</label>
+        <select id="onBehalfSelect">
+          <option value="">— ยื่นให้ตัวเอง —</option>
+        </select>
+        <div class="hint">เมื่อเลือกพนักงานคนอื่น ระบบจะตรวจสอบและตัดโควตาของพนักงานคนนั้น ไม่ใช่ของคุณ</div>
+      </div>
+    </div>
+
     <div class="card" id="quotaCard" style="display:none">
       <div id="quotaHeader" class="quota-header"></div>
       <div id="quotaList"></div>
@@ -71,7 +81,7 @@
 
 <!-- ⚠️ เวลาแก้ config.js / app.js / style.css ต้องเพิ่มเลข ?v= ที่นี่ด้วยทุกครั้ง
      ไม่งั้นเบราว์เซอร์ในแอป LINE จะใช้ไฟล์เก่าที่แคชไว้ และจะไม่เห็นการเปลี่ยนแปลง -->
-<script src="config.js?v=7"></script>
-<script src="app.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

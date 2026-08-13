@@ -28,11 +28,18 @@ const els = {
   submitBtn: document.getElementById('submitBtn'),
   quotaCard: document.getElementById('quotaCard'),
   quotaHeader: document.getElementById('quotaHeader'),
-  quotaList: document.getElementById('quotaList')
+  quotaList: document.getElementById('quotaList'),
+  onBehalfCard: document.getElementById('onBehalfCard'),
+  onBehalfSelect: document.getElementById('onBehalfSelect')
 };
 
 // เก็บโควตาของผู้ใช้ไว้ เพื่อไฮไลต์แถวตามประเภทการลาที่เลือก
 let myQuotas = [];
+
+// สถานะสำหรับฟีเจอร์ "ยื่นแทนพนักงาน" (เฉพาะ HR — canSubmitForOthers จากเซิร์ฟเวอร์)
+let meEmpId = null;
+let employeesList = [];
+let quotasSelf = [];
 
 function showError(msg) {
   els.error.textContent = msg;
@@ -92,7 +99,9 @@ function updateEmergencyNote() {
   const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
   if (startDay.getTime() < todayDay.getTime()) {
-    els.emergencyNote.textContent = '⛔ ไม่อนุญาตให้ยื่นลาย้อนหลัง กรุณาเลือกตั้งแต่วันนี้เป็นต้นไป';
+    els.emergencyNote.textContent = getOnBehalfEmpId()
+      ? '📌 วันที่เริ่มลาเป็นวันที่ผ่านมาแล้ว (ยื่นย้อนหลังแทนพนักงาน) — ระบบจะตรวจสอบเพดานวันย้อนหลังตอนกดส่ง'
+      : '⛔ ไม่อนุญาตให้ยื่นลาย้อนหลัง กรุณาเลือกตั้งแต่วันนี้เป็นต้นไป';
     return;
   }
 
@@ -244,6 +253,47 @@ function getSelectedDelegates() {
   return Array.prototype.map.call(boxes, function (b) { return b.value; });
 }
 
+// ---- ยื่นแทนพนักงาน (สิทธิ์ HR เท่านั้น — ควบคุมจริงที่เซิร์ฟเวอร์อีกชั้น) ----
+function populateOnBehalfSelect(employees, myEmpId) {
+  if (!els.onBehalfSelect) return;
+  const current = els.onBehalfSelect.value;
+  els.onBehalfSelect.innerHTML = '<option value="">— ยื่นให้ตัวเอง —</option>';
+  employees
+    .filter(function (e) { return e.empId !== myEmpId; })
+    .forEach(function (e) {
+      const opt = document.createElement('option');
+      opt.value = e.empId;
+      opt.textContent = e.fullName + (e.department ? ' (' + e.department + ')' : '');
+      els.onBehalfSelect.appendChild(opt);
+    });
+  els.onBehalfSelect.value = current;
+}
+
+function getOnBehalfEmpId() {
+  return els.onBehalfSelect ? els.onBehalfSelect.value : '';
+}
+
+// สลับ "ยื่นให้ตัวเอง" <-> "ยื่นแทนพนักงาน" ต้องปรับ 3 จุด:
+//  1) รายชื่อผู้รับมอบงาน — ห้ามให้เจ้าของใบลาเป็นผู้รับมอบงานของตัวเอง
+//  2) ตัวเลือกประเภทการลา — เลิกกรองตามโควตาของ HR เอง เพราะไม่เกี่ยวกับคนที่ยื่นแทน
+//  3) การ์ดโควตาที่โชว์อยู่เป็นของ HR เอง ไม่ใช่ของเจ้าของใบลา จึงต้องซ่อนไว้กันเข้าใจผิด
+//     (เซิร์ฟเวอร์ยังตรวจโควตาจริงของเจ้าของใบลาซ้ำอีกครั้งตอนกดส่งเสมอ)
+function refreshFormForTarget() {
+  const targetEmpId = getOnBehalfEmpId() || meEmpId;
+  renderDelegateList(employeesList, targetEmpId);
+  updateEmergencyNote();
+
+  if (getOnBehalfEmpId()) {
+    populateLeaveTypes(null);
+    els.quotaCard.style.display = 'none';
+  } else {
+    populateLeaveTypes(quotasSelf);
+    if (quotasSelf.length) {
+      els.quotaCard.style.display = '';
+    }
+  }
+}
+
 function toLocalISOWithOffset(dtLocalValue) {
   // input[type=datetime-local] gives e.g. 2026-08-10T09:00 (no timezone)
   // ระบบฝั่งเซิร์ฟเวอร์ตีความเป็นเวลาไทย (+07:00) อยู่แล้ว จึงต่อ offset ตรงๆ
@@ -267,7 +317,8 @@ async function submitLeaveRequest(idToken) {
     startDT: toLocalISOWithOffset(els.startDT.value),
     endDT: toLocalISOWithOffset(els.endDT.value),
     reason: els.reason.value,
-    delegateEmpId: delegates.join(',')
+    delegateEmpId: delegates.join(','),
+    onBehalfEmpId: getOnBehalfEmpId()
     // ไม่ต้องส่ง isEmergency — เซิร์ฟเวอร์ตัดสินเองจากวันที่เริ่มลา
   };
 
@@ -346,10 +397,20 @@ async function main() {
     }
 
     const formData = await fetchFormData(idToken);
-    populateLeaveTypes(formData.quotas);
+    meEmpId = formData.me ? formData.me.empId : null;
+    employeesList = formData.employees || [];
+    quotasSelf = formData.quotas || [];
     renderQuota(formData);
-    // ตัดตัวเองออกจากรายชื่อผู้รับมอบงาน (เซิร์ฟเวอร์ยืนยันตัวตนจาก ID Token แล้ว)
-    renderDelegateList(formData.employees || [], formData.me ? formData.me.empId : null);
+
+    // ช่อง "ยื่นแทนพนักงาน" โชว์เฉพาะ HR (canSubmitForOthers มาจากเซิร์ฟเวอร์ ตรวจสิทธิ์จริงอีกชั้นตอนกดส่ง)
+    if (formData.canSubmitForOthers && els.onBehalfCard) {
+      els.onBehalfCard.classList.remove('hidden');
+      populateOnBehalfSelect(employeesList, meEmpId);
+      els.onBehalfSelect.addEventListener('change', refreshFormForTarget);
+    }
+
+    // ตัดเจ้าของใบลาที่แท้จริงออกจากรายชื่อผู้รับมอบงาน + กรองประเภทการลาตามบริบทปัจจุบัน
+    refreshFormForTarget();
     void profile;
 
     els.leaveType.addEventListener('change', highlightSelectedQuota);
@@ -361,7 +422,11 @@ async function main() {
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState !== 'visible') return;
       fetchFormData(idToken)
-        .then(function (fresh) { renderQuota(fresh); })
+        .then(function (fresh) {
+          quotasSelf = fresh.quotas || [];
+          renderQuota(fresh);
+          if (!getOnBehalfEmpId()) populateLeaveTypes(quotasSelf);
+        })
         .catch(function () { /* ดึงซ้ำไม่สำเร็จ — คงค่าเดิมไว้ ไม่ต้องรบกวนผู้ใช้ */ });
     });
 

@@ -119,6 +119,11 @@ textarea { min-height: 80px; resize: vertical; }
 .quota-row .qsub { font-size: 11px; color: #aaa; margin-left: 6px; font-weight: 400; }
 .quota-row.active { background: #f4fbf6; margin: 0 -8px; padding: 8px; border-radius: 6px; }
 
+.onbehalf-card {
+  border-left: 4px solid #e8a33d;
+  background: #fffaf1;
+}
+
 .switch-row {
   display: flex;
   align-items: center;

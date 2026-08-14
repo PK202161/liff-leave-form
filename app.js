@@ -23,6 +23,7 @@ const els = {
   endDT: document.getElementById('endDT'),
   daysPreview: document.getElementById('daysPreview'),
   reason: document.getElementById('reason'),
+  handoverNote: document.getElementById('handoverNote'),
   emergencyNote: document.getElementById('emergencyNote'),
   delegateList: document.getElementById('delegateList'),
   submitBtn: document.getElementById('submitBtn'),
@@ -307,6 +308,10 @@ async function submitLeaveRequest(idToken) {
     showError('กรุณาเลือกผู้รับมอบงานอย่างน้อย 1 คน');
     return;
   }
+  if (!els.handoverNote.value.trim()) {
+    showError('กรุณากรอกรายละเอียดงานที่มอบหมายให้ผู้รับมอบงาน');
+    return;
+  }
   hideError();
   els.submitBtn.disabled = true;
   els.submitBtn.innerHTML = '<span class="spinner"></span>กำลังส่ง...';
@@ -317,6 +322,7 @@ async function submitLeaveRequest(idToken) {
     startDT: toLocalISOWithOffset(els.startDT.value),
     endDT: toLocalISOWithOffset(els.endDT.value),
     reason: els.reason.value,
+    handoverNote: els.handoverNote.value.trim(),
     delegateEmpId: delegates.join(','),
     onBehalfEmpId: getOnBehalfEmpId()
     // ไม่ต้องส่ง isEmergency — เซิร์ฟเวอร์ตัดสินเองจากวันที่เริ่มลา

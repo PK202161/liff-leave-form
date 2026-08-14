@@ -66,12 +66,18 @@
     </div>
 
     <div class="card">
-      <div class="field" style="margin-bottom:0">
+      <div class="field" style="margin-bottom:14px">
         <label>ผู้รับมอบงาน (เลือกได้มากกว่า 1 คน)</label>
         <div class="hint">ต้องเลือกอย่างน้อย 1 คน — ทุกคนต้องกดรับทราบก่อนคำขอจะส่งไปหาหัวหน้า</div>
         <div id="delegateList" class="delegate-list">
           <div class="hint" style="padding:10px">กำลังโหลดรายชื่อพนักงาน...</div>
         </div>
+      </div>
+
+      <div class="field" style="margin-bottom:0">
+        <label for="handoverNote">รายละเอียดงานที่มอบหมาย</label>
+        <textarea id="handoverNote" placeholder="ระบุงาน/สิ่งที่ต้องการให้ผู้รับมอบงานดูแลระหว่างที่คุณลา" required></textarea>
+        <div class="hint">ผู้รับมอบงานทุกคนจะเห็นข้อความนี้ในการ์ดขอรับทราบ และฝ่ายบุคคลจะเห็นตอนอนุมัติ/ไม่อนุมัติ</div>
       </div>
     </div>
 
@@ -81,7 +87,7 @@
 
 <!-- ⚠️ เวลาแก้ config.js / app.js / style.css ต้องเพิ่มเลข ?v= ที่นี่ด้วยทุกครั้ง
      ไม่งั้นเบราว์เซอร์ในแอป LINE จะใช้ไฟล์เก่าที่แคชไว้ และจะไม่เห็นการเปลี่ยนแปลง -->
-<script src="config.js?v=8"></script>
-<script src="app.js?v=8"></script>
+<script src="config.js?v=9"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

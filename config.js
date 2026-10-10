@@ -15,6 +15,8 @@ const CONFIG = {
   // ปลายทาง n8n — คงที่ ไม่ต้องแก้ (เว้นแต่ย้าย n8n host)
   SUBMIT_URL: 'https://n8npkapp.pktechnic.com/webhook/line-leave-submit',
   EMPLOYEE_LIST_URL: 'https://n8npkapp.pktechnic.com/webhook/line-leave-employee-list',
+  // ขอสลับวันหยุด (Addendum G) — หน้า swap.html
+  SWAP_URL: 'https://n8npkapp.pktechnic.com/webhook/line-leave-swap',
 
   // ประเภทการลาที่เลือกได้ — ต้องตรงกับ Leave_Type ในชีตทุกตัวอักษร
   LEAVE_TYPES: [

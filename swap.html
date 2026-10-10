@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>สลับวันหยุด - PK Technic</title>
+<link rel="stylesheet" href="style.css?v=3" />
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  .sw-item { border-top: 1px solid #eee; padding: 12px 0; }
+  .sw-item:first-of-type { border-top: 0; padding-top: 0; }
+  .sw-item .who { font-weight: 700; }
+  .sw-item .line { font-size: 14px; color: #333; margin-top: 2px; }
+  .sw-item .warn { font-size: 13px; color: #b26a00; margin-top: 4px; }
+  .chip { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #eef1f4; color: #444; margin-left: 6px; }
+  .chip.Approved { background: #e3f7ea; color: #0a7a34; }
+  .chip.Waiting_Manager, .chip.Cancel_Requested { background: #fff4e0; color: #8a5a00; }
+  .chip.Rejected, .chip.Expired, .chip.Cancelled { background: #f1f1f1; color: #777; }
+  .row-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .row-btns button { flex: 1; border: 0; border-radius: 8px; padding: 10px; font-size: 15px; font-weight: 600; color: #fff; background: #06c755; }
+  .row-btns button.no { background: #8a8f98; }
+  .row-btns button.cancel { background: #fff; color: #c0392b; border: 1px solid #c0392b; }
+  .row-btns button:disabled { opacity: .5; }
+  .card h2 { font-size: 16px; margin: 0 0 10px; }
+  .focus { outline: 2px solid #06c755; border-radius: 10px; }
+  .info-line { font-size: 14px; margin: 2px 0; }
+  .top-link { display: block; text-align: center; margin: 4px 0 12px; font-size: 14px; color: #06c755; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔄 ขอสลับวันหยุด</h1>
+  <p>PK Technic — ระบบลาภายใน</p>
+</header>
+
+<main>
+  <div id="loadingMsg" class="msg info">กำลังโหลด...</div>
+  <div id="errorMsg" class="msg error hidden"></div>
+  <div id="successMsg" class="msg success hidden"></div>
+
+  <div id="app" class="hidden">
+    <div class="card hidden" id="approveCard">
+      <h2>รออนุมัติจากคุณ</h2>
+      <div id="approveList"></div>
+    </div>
+
+    <div class="card" id="infoCard">
+      <div class="info-line" id="infoName"></div>
+      <div class="info-line" id="infoOff"></div>
+      <div class="info-line" id="infoMgr"></div>
+      <div class="hint" id="infoRules"></div>
+    </div>
+
+    <form class="card" id="swapForm">
+      <h2>ยื่นคำขอใหม่</h2>
+      <div class="field">
+        <label for="workDate">วันหยุดประจำที่จะ <b>มาทำงาน</b></label>
+        <select id="workDate"></select>
+      </div>
+      <div class="field">
+        <label for="offDate">วันที่จะ <b>หยุดแทน</b></label>
+        <select id="offDate" disabled></select>
+        <div class="hint" id="offHint"></div>
+      </div>
+      <div class="field">
+        <label for="reason">เหตุผล</label>
+        <textarea id="reason" maxlength="300" placeholder="เช่น ของเข้าวันอาทิตย์ / ธุระวันพุธ"></textarea>
+      </div>
+      <button type="submit" id="submitBtn">ส่งคำขอสลับวันหยุด</button>
+    </form>
+
+    <div class="card">
+      <h2>คำขอของฉัน</h2>
+      <div id="mineList"><div class="hint">ยังไม่มีคำขอ</div></div>
+    </div>
+
+    <a class="top-link" href="index.html">← กลับไปหน้ายื่นใบลา</a>
+  </div>
+</main>
+
+<!-- ⚠️ แก้ config.js / swap.js แล้วต้องเพิ่มเลข ?v= ที่นี่ (เบราว์เซอร์ในแอป LINE แคชไฟล์เก่า) -->
+<script src="config.js?v=10"></script>
+<script src="swap.js?v=1"></script>
+</body>
+</html>
